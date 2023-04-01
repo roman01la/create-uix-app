@@ -12,11 +12,20 @@ program
   .name(pkg.name)
   .description(pkg.description)
   .version(pkg.version)
-  .argument("<project-name>", "directory where a project will be created");
+  .argument("<project-name>", "directory where a project will be created")
+  .option("--re-frame", "add re-frame setup");
 
 program.parse();
 
 const [projectName] = program.args;
+const { reFrame } = program.opts();
+
+const masterUrl =
+  "https://github.com/pitch-io/uix-starter/archive/master.tar.gz";
+const reframeUrl =
+  "https://github.com/pitch-io/uix-starter/archive/re-frame.tar.gz";
+
+const downloadUrl = reFrame ? reframeUrl : masterUrl;
 
 if (!projectName) {
   program.help();
@@ -25,7 +34,7 @@ if (!projectName) {
     "Downloading project template from https://github.com/pitch-io/uix-starter..."
   );
   axios
-    .get("https://github.com/pitch-io/uix-starter/archive/master.tar.gz", {
+    .get(downloadUrl, {
       responseType: "stream",
     })
     .then(
