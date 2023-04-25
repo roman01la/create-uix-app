@@ -40,35 +40,41 @@ if (!projectName) {
     .then(
       (r) =>
         new Promise((resolve, reject) => {
-          console.log(`Unpacking into ${projectName}...`);
-          r.data.pipe(
-            tar.extract({ file: projectName }, (err) => {
-              if (err) {
-                reject(err);
-              } else {
-                resolve();
-              }
+          r.data
+            .pipe(tar.extract({ cwd: process.cwd() }))
+            .on("end", () => {
+              fs.renameSync(
+                path.join(
+                  process.cwd(),
+                  reFrame ? "uix-starter-re-frame" : "uix-starter-main"
+                ),
+                path.join(process.cwd(), projectName)
+              );
+              resolve();
             })
-          );
+            .on("error", (err) => reject(err));
         })
     )
     .then(() => {
       const pkgjson = JSON.parse(
-        fs.readFileSync(path.join(projectName, "package.json"), "utf8")
+        fs.readFileSync(
+          path.join(process.cwd(), projectName, "package.json"),
+          "utf8"
+        )
       );
       pkgjson.name = projectName;
       fs.writeFileSync(
-        path.join(projectName, "package.json"),
+        path.join(process.cwd(), projectName, "package.json"),
         prettier.format(JSON.stringify(pkgjson), {
           parser: "json",
         })
       );
       const readme = fs.readFileSync(
-        path.join(projectName, "README.md"),
+        path.join(process.cwd(), projectName, "README.md"),
         "utf8"
       );
       fs.writeFileSync(
-        path.join(projectName, "README.md"),
+        path.join(process.cwd(), projectName, "README.md"),
         readme
           .replace("uix-starter", projectName)
           .split("\n")
