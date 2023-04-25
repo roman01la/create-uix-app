@@ -1,7 +1,7 @@
 {
   "name": "create-uix-app",
   "description": "Creates a starter project for UIx2 web app",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": {
     "name": "Roman Liutikov"
   },
@@ -19,6 +19,6 @@
     "axios": "^1.3.4",
     "commander": "^10.0.0",
     "prettier": "^2.8.7",
-    "tar-pack": "^3.4.1"
+    "tar": "^6.1.13"
   }
 }

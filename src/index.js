@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
 const axios = require("axios");
-const pack = require("tar-pack");
+const tar = require("tar");
 const { program } = require("commander");
 const prettier = require("prettier");
 const pkg = require("../package.json");
@@ -42,7 +42,7 @@ if (!projectName) {
         new Promise((resolve, reject) => {
           console.log(`Unpacking into ${projectName}...`);
           r.data.pipe(
-            pack.unpack(projectName, (err) => {
+            tar.extract(projectName, (err) => {
               if (err) {
                 reject(err);
               } else {
