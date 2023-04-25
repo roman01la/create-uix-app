@@ -42,7 +42,7 @@ if (!projectName) {
         new Promise((resolve, reject) => {
           console.log(`Unpacking into ${projectName}...`);
           r.data.pipe(
-            tar.extract(projectName, (err) => {
+            tar.extract({ file: projectName }, (err) => {
               if (err) {
                 reject(err);
               } else {

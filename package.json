@@ -1,7 +1,7 @@
 {
   "name": "create-uix-app",
   "description": "Creates a starter project for UIx2 web app",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": {
     "name": "Roman Liutikov"
   },
