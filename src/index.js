@@ -15,10 +15,7 @@ program
   .version(pkg.version)
   .argument("<project-name>", "directory where a project will be created")
   .option("--re-frame", "add re-frame setup")
-  .option(
-    "--react-native <app-name>",
-    "setup in existing React Native project"
-  );
+  .option("--react-native", "setup in existing React Native project");
 
 program.parse();
 
@@ -127,6 +124,20 @@ if (!projectName && !reactNative) {
         );
 
         fs.rmdirSync("uix-starter-react-native", { recursive: true });
+
+        const coreNs = fs.readFileSync(
+          path.join(process.cwd(), "src/app/core.cljs"),
+          "utf8"
+        );
+        fs.writeFileSync(
+          path.join(process.cwd(), "src/app/core.cljs"),
+          coreNs.replace("{{app-name}}", projectName)
+        );
+
+        console.log("Done.");
+        console.log("\n");
+        console.log("yarn cljs:dev # run dev build in watch mode");
+        console.log("yarn cljs:release # build production bundle");
       } else {
         const pkgjson = JSON.parse(
           fs.readFileSync(
