@@ -78,14 +78,7 @@ if (!projectName && !reactNative) {
           )
         );
         const pkgjsonPrjct = JSON.parse(
-          fs.readFileSync(
-            path.join(
-              process.cwd(),
-              "uix-starter-react-native",
-              "package.json"
-            ),
-            "utf8"
-          )
+          fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
         );
 
         // update package.json
@@ -123,7 +116,7 @@ if (!projectName && !reactNative) {
           path.join(process.cwd(), "shadow-cljs.edn")
         );
 
-        fs.rmdirSync("uix-starter-react-native", { recursive: true });
+        fs.rmSync("uix-starter-react-native", { recursive: true });
 
         const coreNs = fs.readFileSync(
           path.join(process.cwd(), "src/app/core.cljs"),
@@ -135,7 +128,6 @@ if (!projectName && !reactNative) {
         );
 
         console.log("Done.");
-        console.log("\n");
         console.log("yarn cljs:dev # run dev build in watch mode");
         console.log("yarn cljs:release # build production bundle");
       } else {
