@@ -127,9 +127,19 @@ if (!projectName && !reactNative) {
         );
 
         fs.writeFileSync(
-          path.join(process.cwd(), "src/app/core.cljs"),
+          path.join(process.cwd(), "index.js"),
           `import "./app/index.js";`
         );
+
+        if (fs.existsSync(".gitignore")) {
+          fs.appendFileSync(
+            path.join(process.cwd(), ".gitignore"),
+            `
+.cpcache/
+.shadow-cljs/
+app/`
+          );
+        }
 
         console.log("Done.");
         console.log("yarn cljs:dev # run dev build in watch mode");
