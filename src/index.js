@@ -81,7 +81,6 @@ if (!projectName && !reactNative) {
           fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
         );
 
-        // update package.json
         fs.writeFileSync(
           path.join(process.cwd(), "package.json"),
           prettier.format(
@@ -125,6 +124,11 @@ if (!projectName && !reactNative) {
         fs.writeFileSync(
           path.join(process.cwd(), "src/app/core.cljs"),
           coreNs.replace("{{app-name}}", projectName)
+        );
+
+        fs.writeFileSync(
+          path.join(process.cwd(), "src/app/core.cljs"),
+          `import "./app/index.js";`
         );
 
         console.log("Done.");
