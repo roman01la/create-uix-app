@@ -110,12 +110,13 @@ if (!projectName && !reFrame && !reactNative && !expo) {
           if (err) {
             console.error(err);
           } else {
-            console.log("Done.");
             console.log("\n");
             console.log("Using:");
-            Object.entries(pkgjson.dependencies)
-              .map(([k, v]) => `${k}@${v}`)
-              .join("\n");
+            console.log(
+              Object.entries(pkgjson.dependencies)
+                .map(([k, v]) => `${k}@${v}`)
+                .join("\n")
+            );
             console.log("\n");
             console.log(
               "yarn dev # run dev build with Expo and cljs build in watch mode"
@@ -199,8 +200,6 @@ if (!projectName && !reFrame && !reactNative && !expo) {
 app/`
           );
         }
-
-        console.log("Done.");
         console.log("yarn cljs:dev # run dev build in watch mode");
         console.log("yarn cljs:release # build production bundle");
       } else {
@@ -234,7 +233,13 @@ app/`
           if (err) {
             console.error(err);
           } else {
-            console.log("Done.");
+            console.log("\n");
+            console.log("Using:");
+            console.log(
+              Object.entries(pkgjson.dependencies)
+                .map(([k, v]) => `${k}@${v}`)
+                .join("\n")
+            );
             console.log("\n");
             console.log(
               "yarn dev # run dev build in watch mode with CLJS REPL"
