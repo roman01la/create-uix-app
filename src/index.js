@@ -236,7 +236,7 @@ app/`
             console.log("\n");
             console.log("Using:");
             console.log(
-              Object.entries(pkgjson.dependencies)
+              Object.entries(pkgjson.devDependencies)
                 .map(([k, v]) => `${k}@${v}`)
                 .join("\n")
             );
