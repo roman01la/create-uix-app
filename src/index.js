@@ -15,12 +15,16 @@ program
   .version(pkg.version)
   .argument("<project-name>", "directory where a project will be created")
   .option("--re-frame", "add re-frame setup")
-  .option("--react-native", "setup in existing React Native project");
+  .option("--react-native", "setup in existing React Native project")
+  .option(
+    "--react-native-expo",
+    "create a new React Native project using Expo"
+  );
 
 program.parse();
 
 const [projectName] = program.args;
-const { reFrame, reactNative } = program.opts();
+const { reFrame, reactNative, reactNativeExpo } = program.opts();
 
 const masterUrl =
   "https://github.com/pitch-io/uix-starter/archive/master.tar.gz";
@@ -28,14 +32,22 @@ const reframeUrl =
   "https://github.com/pitch-io/uix-starter/archive/re-frame.tar.gz";
 const reactNativeUrl =
   "https://github.com/pitch-io/uix-starter/archive/react-native.tar.gz";
+const reactNativeExpoUrl =
+  "https://github.com/pitch-io/uix-starter/archive/react-native-expo.tar.gz";
 
-const downloadUrl = reactNative
-  ? reactNativeUrl
-  : reFrame
-  ? reframeUrl
-  : masterUrl;
+let downloadUrl;
 
-if (!projectName && !reactNative) {
+if (reactNative) {
+  downloadUrl = reactNativeUrl;
+} else if (reactNativeExpo) {
+  downloadUrl = reactNativeExpoUrl;
+} else if (reFrame) {
+  downloadUrl = reframeUrl;
+} else {
+  downloadUrl = masterUrl;
+}
+
+if (!projectName && !reFrame && !reactNative && !reactNativeExpo) {
   program.help();
 } else {
   console.log(
@@ -55,7 +67,11 @@ if (!projectName && !reactNative) {
                 fs.renameSync(
                   path.join(
                     process.cwd(),
-                    reFrame ? "uix-starter-re-frame" : "uix-starter-main"
+                    reFrame
+                      ? "uix-starter-re-frame"
+                      : reactNativeExpo
+                      ? "uix-starter-react-native-expo"
+                      : "uix-starter-main"
                   ),
                   path.join(process.cwd(), projectName)
                 );
@@ -66,7 +82,51 @@ if (!projectName && !reactNative) {
         })
     )
     .then(() => {
-      if (reactNative) {
+      if (reactNativeExpo) {
+        const pkgjson = JSON.parse(
+          fs.readFileSync(
+            path.join(process.cwd(), projectName, "package.json"),
+            "utf8"
+          )
+        );
+        pkgjson.name = projectName;
+        fs.writeFileSync(
+          path.join(process.cwd(), projectName, "package.json"),
+          prettier.format(JSON.stringify(pkgjson), {
+            parser: "json",
+          })
+        );
+        const readme = fs.readFileSync(
+          path.join(process.cwd(), projectName, "README.md"),
+          "utf8"
+        );
+        fs.writeFileSync(
+          path.join(process.cwd(), projectName, "README.md"),
+          readme
+            .replace("uix-starter", projectName)
+            .split("\n")
+            .filter((l) => !l.startsWith("Template project"))
+            .join("\n")
+        );
+        console.log("Installing dependencies...");
+        exec(`cd ${projectName} && yarn install`, (err) => {
+          if (err) {
+            console.error(err);
+          } else {
+            console.log("Done.");
+            console.log("\n");
+            console.log("Using:");
+            Object.entries(pkgjson.dependencies)
+              .map(([k, v]) => `${k}@${v}`)
+              .join("\n");
+            console.log("\n");
+            console.log(
+              "yarn dev # run dev build with Expo and cljs build in watch mode"
+            );
+            console.log("yarn cljs:release # build production bundle");
+          }
+        });
+      } else if (reactNative) {
         const pkgjsonTmpl = JSON.parse(
           fs.readFileSync(
             path.join(
