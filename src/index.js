@@ -80,6 +80,21 @@ if (!projectName && !reFrame && !reactNative && !expo) {
     )
     .then(() => {
       if (expo) {
+        const appjson = JSON.parse(
+          fs.readFileSync(
+            path.join(process.cwd(), projectName, "app.json"),
+            "utf8"
+          )
+        );
+        appjson.expo.name = projectName;
+        appjson.expo.slug = projectName;
+        fs.writeFileSync(
+          path.join(process.cwd(), projectName, "app.json"),
+          prettier.format(JSON.stringify(appjson), {
+            parser: "json",
+          })
+        );
+
         const pkgjson = JSON.parse(
           fs.readFileSync(
             path.join(process.cwd(), projectName, "package.json"),
