@@ -9,6 +9,10 @@ const prettier = require("prettier");
 const deepmerge = require("deepmerge");
 const pkg = require("../package.json");
 
+function camelToKebab(str) {
+  return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+}
+
 program
   .name(pkg.name)
   .description(pkg.description)
@@ -87,7 +91,7 @@ if (!projectName && !reFrame && !reactNative && !expo) {
           )
         );
         appjson.expo.name = projectName;
-        appjson.expo.slug = projectName;
+        appjson.expo.slug = camelToKebab(projectName);
         fs.writeFileSync(
           path.join(process.cwd(), projectName, "app.json"),
           prettier.format(JSON.stringify(appjson), {
@@ -125,14 +129,12 @@ if (!projectName && !reFrame && !reactNative && !expo) {
           if (err) {
             console.error(err);
           } else {
-            console.log("\n");
             console.log("Using:");
             console.log(
               Object.entries(pkgjson.dependencies)
                 .map(([k, v]) => `${k}@${v}`)
                 .join("\n")
             );
-            console.log("\n");
             console.log(
               "yarn dev # run dev build with Expo and cljs build in watch mode"
             );
@@ -248,14 +250,12 @@ app/`
           if (err) {
             console.error(err);
           } else {
-            console.log("\n");
             console.log("Using:");
             console.log(
               Object.entries(pkgjson.devDependencies)
                 .map(([k, v]) => `${k}@${v}`)
                 .join("\n")
             );
-            console.log("\n");
             console.log(
               "yarn dev # run dev build in watch mode with CLJS REPL"
             );
