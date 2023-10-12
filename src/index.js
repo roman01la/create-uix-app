@@ -129,12 +129,14 @@ if (!projectName && !reFrame && !reactNative && !expo) {
           if (err) {
             console.error(err);
           } else {
+            console.log();
             console.log("Using:");
             console.log(
               Object.entries(pkgjson.dependencies)
                 .map(([k, v]) => `${k}@${v}`)
                 .join("\n")
             );
+            console.log();
             console.log(
               "yarn dev # run dev build with Expo and cljs build in watch mode"
             );
@@ -250,12 +252,14 @@ app/`
           if (err) {
             console.error(err);
           } else {
+            console.log();
             console.log("Using:");
             console.log(
               Object.entries(pkgjson.devDependencies)
                 .map(([k, v]) => `${k}@${v}`)
                 .join("\n")
             );
+            console.log();
             console.log(
               "yarn dev # run dev build in watch mode with CLJS REPL"
             );
