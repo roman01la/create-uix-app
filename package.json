@@ -1,7 +1,7 @@
 {
   "name": "create-uix-app",
   "description": "Creates a starter project for UIx web app",
-  "version": "1.4.0-rc1",
+  "version": "1.4.0-rc3",
   "author": {
     "name": "Roman Liutikov"
   },
@@ -12,7 +12,9 @@
   "keywords": [
     "clojurescript",
     "cljs",
-    "uix"
+    "uix",
+    "react native",
+    "expo"
   ],
   "license": "MIT",
   "dependencies": {

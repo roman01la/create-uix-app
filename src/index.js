@@ -16,15 +16,12 @@ program
   .argument("<project-name>", "directory where a project will be created")
   .option("--re-frame", "add re-frame setup")
   .option("--react-native", "setup in existing React Native project")
-  .option(
-    "--react-native-expo",
-    "create a new React Native project using Expo"
-  );
+  .option("--expo", "create a new React Native project using Expo");
 
 program.parse();
 
 const [projectName] = program.args;
-const { reFrame, reactNative, reactNativeExpo } = program.opts();
+const { reFrame, reactNative, expo } = program.opts();
 
 const masterUrl =
   "https://github.com/pitch-io/uix-starter/archive/master.tar.gz";
@@ -39,7 +36,7 @@ let downloadUrl;
 
 if (reactNative) {
   downloadUrl = reactNativeUrl;
-} else if (reactNativeExpo) {
+} else if (expo) {
   downloadUrl = reactNativeExpoUrl;
 } else if (reFrame) {
   downloadUrl = reframeUrl;
@@ -47,7 +44,7 @@ if (reactNative) {
   downloadUrl = masterUrl;
 }
 
-if (!projectName && !reFrame && !reactNative && !reactNativeExpo) {
+if (!projectName && !reFrame && !reactNative && !expo) {
   program.help();
 } else {
   console.log(
@@ -69,7 +66,7 @@ if (!projectName && !reFrame && !reactNative && !reactNativeExpo) {
                     process.cwd(),
                     reFrame
                       ? "uix-starter-re-frame"
-                      : reactNativeExpo
+                      : expo
                       ? "uix-starter-react-native-expo"
                       : "uix-starter-main"
                   ),
@@ -82,7 +79,7 @@ if (!projectName && !reFrame && !reactNative && !reactNativeExpo) {
         })
     )
     .then(() => {
-      if (reactNativeExpo) {
+      if (expo) {
         const pkgjson = JSON.parse(
           fs.readFileSync(
             path.join(process.cwd(), projectName, "package.json"),
@@ -109,7 +106,7 @@ if (!projectName && !reFrame && !reactNative && !reactNativeExpo) {
             .join("\n")
         );
         console.log("Installing dependencies...");
-        exec(`cd ${projectName} && yarn install`, (err) => {
+        const pDeps = exec(`cd ${projectName} && yarn install`, (err) => {
           if (err) {
             console.error(err);
           } else {
@@ -126,6 +123,8 @@ if (!projectName && !reFrame && !reactNative && !reactNativeExpo) {
             console.log("yarn cljs:release # build production bundle");
           }
         });
+        pDeps.stdout.pipe(process.stdout);
+        pDeps.stderr.pipe(process.stderr);
       } else if (reactNative) {
         const pkgjsonTmpl = JSON.parse(
           fs.readFileSync(
@@ -231,7 +230,7 @@ app/`
             .join("\n")
         );
         console.log("Installing dependencies...");
-        exec(`cd ${projectName} && yarn install`, (err) => {
+        const pDeps = exec(`cd ${projectName} && yarn install`, (err) => {
           if (err) {
             console.error(err);
           } else {
@@ -243,6 +242,8 @@ app/`
             console.log("yarn release # build production bundle");
           }
         });
+        pDeps.stdout.pipe(process.stdout);
+        pDeps.stderr.pipe(process.stderr);
       }
     });
 }
