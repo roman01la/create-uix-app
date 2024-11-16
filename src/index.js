@@ -125,7 +125,7 @@ if (!projectName && !reFrame && !reactNative && !expo) {
             .join("\n")
         );
         console.log("Installing dependencies...");
-        const pDeps = exec(`cd ${projectName} && yarn install`, (err) => {
+        const pDeps = exec(`cd ${projectName} && npm install`, (err) => {
           if (err) {
             console.error(err);
           } else {
@@ -138,9 +138,9 @@ if (!projectName && !reFrame && !reactNative && !expo) {
             );
             console.log();
             console.log(
-              "yarn dev # run dev build with Expo and cljs build in watch mode"
+              "npm run dev # run dev build with Expo and cljs build in watch mode"
             );
-            console.log("yarn cljs:release # build production bundle");
+            console.log("npm run cljs:release # build production bundle");
           }
         });
         pDeps.stdout.pipe(process.stdout);
@@ -219,8 +219,8 @@ if (!projectName && !reFrame && !reactNative && !expo) {
 app/`
           );
         }
-        console.log("yarn cljs:dev # run dev build in watch mode");
-        console.log("yarn cljs:release # build production bundle");
+        console.log("npm run cljs:dev # run dev build in watch mode");
+        console.log("npm run cljs:release # build production bundle");
       } else {
         const pkgjson = JSON.parse(
           fs.readFileSync(
@@ -248,7 +248,7 @@ app/`
             .join("\n")
         );
         console.log("Installing dependencies...");
-        const pDeps = exec(`cd ${projectName} && yarn install`, (err) => {
+        const pDeps = exec(`cd ${projectName} && npm install`, (err) => {
           if (err) {
             console.error(err);
           } else {
@@ -261,9 +261,9 @@ app/`
             );
             console.log();
             console.log(
-              "yarn dev # run dev build in watch mode with CLJS REPL"
+              "npm run dev # run dev build in watch mode with CLJS REPL"
             );
-            console.log("yarn release # build production bundle");
+            console.log("npm run release # build production bundle");
           }
         });
         pDeps.stdout.pipe(process.stdout);
