@@ -20,12 +20,13 @@ program
   .argument("<project-name>", "directory where a project will be created")
   .option("--re-frame", "add re-frame setup")
   .option("--react-native", "setup in existing React Native project")
-  .option("--expo", "create a new React Native project using Expo");
+  .option("--expo", "create a new React Native project using Expo")
+  .option("--fly-io", "creates full stack app with Fly.io");
 
 program.parse();
 
 const [projectName] = program.args;
-const { reFrame, reactNative, expo } = program.opts();
+const { reFrame, reactNative, expo, flyIo } = program.opts();
 
 const masterUrl =
   "https://github.com/pitch-io/uix-starter/archive/master.tar.gz";
@@ -35,6 +36,8 @@ const reactNativeUrl =
   "https://github.com/pitch-io/uix-starter/archive/react-native.tar.gz";
 const reactNativeExpoUrl =
   "https://github.com/pitch-io/uix-starter/archive/react-native-expo.tar.gz";
+const flyioUrl =
+  "https://github.com/pitch-io/uix-starter/archive/fly-io.tar.gz";
 
 let downloadUrl;
 
@@ -44,13 +47,25 @@ if (reactNative) {
   downloadUrl = reactNativeExpoUrl;
 } else if (reFrame) {
   downloadUrl = reframeUrl;
+} else if (flyIo) {
+  downloadUrl = flyioUrl;
 } else {
   downloadUrl = masterUrl;
 }
 
-if (!projectName && !reFrame && !reactNative && !expo) {
+if (!projectName && !reFrame && !reactNative && !expo && !flyIo) {
   program.help();
 } else {
+  let folderName;
+  if (reFrame) {
+    folderName = "uix-starter-re-frame";
+  } else if (expo) {
+    folderName = "uix-starter-react-native-expo";
+  } else if (flyIo) {
+    folderName = "uix-starter-fly-io";
+  } else {
+    pfolderName = "uix-starter-main";
+  }
   console.log(
     "Downloading project template from https://github.com/pitch-io/uix-starter..."
   );
@@ -66,14 +81,7 @@ if (!projectName && !reFrame && !reactNative && !expo) {
             .on("end", () => {
               if (!reactNative) {
                 fs.renameSync(
-                  path.join(
-                    process.cwd(),
-                    reFrame
-                      ? "uix-starter-re-frame"
-                      : expo
-                      ? "uix-starter-react-native-expo"
-                      : "uix-starter-main"
-                  ),
+                  path.join(process.cwd(), folderName),
                   path.join(process.cwd(), projectName)
                 );
               }
@@ -247,6 +255,14 @@ app/`
             .filter((l) => !l.startsWith("Template project"))
             .join("\n")
         );
+        const toml = fs.readFileSync(
+          path.join(process.cwd(), projectName, "fly.toml"),
+          "utf8"
+        );
+        fs.writeFileSync(
+          path.join(process.cwd(), projectName, "fly.toml"),
+          toml.replace("uix-starter", projectName)
+        );
         console.log("Installing dependencies...");
         const pDeps = exec(`cd ${projectName} && npm install`, (err) => {
           if (err) {
@@ -261,9 +277,16 @@ app/`
             );
             console.log();
             console.log(
-              "npm run dev # run dev build in watch mode with CLJS REPL"
+              "Development\n" +
+                "npm run dev # run dev build in watch mode with CLJS REPL\n" +
+                "clojure -M -m app.core # or run the server from REPL"
             );
-            console.log("npm run release # build production bundle");
+            console.log(
+              "Deployment\n" +
+                "install Fly.io CLI https://fly.io/docs/flyctl/install/\n" +
+                "fly app create uix-starter # create a new Fly.io app, run once\n" +
+                "fly deploy"
+            );
           }
         });
         pDeps.stdout.pipe(process.stdout);
