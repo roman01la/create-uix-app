@@ -138,13 +138,6 @@ if (!projectName && !reFrame && !reactNative && !expo && !flyIo) {
             console.error(err);
           } else {
             console.log();
-            console.log("Using:");
-            console.log(
-              Object.entries(pkgjson.dependencies)
-                .map(([k, v]) => `${k}@${v}`)
-                .join("\n")
-            );
-            console.log();
             console.log(
               "npm run dev # run dev build with Expo and cljs build in watch mode"
             );
@@ -269,20 +262,15 @@ app/`
             console.error(err);
           } else {
             console.log();
-            console.log("Using:");
             console.log(
-              Object.entries(pkgjson.devDependencies)
-                .map(([k, v]) => `${k}@${v}`)
-                .join("\n")
-            );
-            console.log();
-            console.log(
-              "Development\n" +
+              "=========================\n" +
+                "Development:\n" +
                 "npm run dev # run dev build in watch mode with CLJS REPL\n" +
-                "clojure -M -m app.core # or run the server from REPL"
+                "clojure -M -m app.core # or run the server from REPL\n\n"
             );
             console.log(
-              "Deployment\n" +
+              "=========================\n" +
+                "Deployment:\n" +
                 "install Fly.io CLI https://fly.io/docs/flyctl/install/\n" +
                 "fly app create uix-starter # create a new Fly.io app, run once\n" +
                 "fly deploy"
