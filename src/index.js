@@ -64,7 +64,7 @@ if (!projectName && !reFrame && !reactNative && !expo && !flyIo) {
   } else if (flyIo) {
     folderName = "uix-starter-fly-io";
   } else {
-    pfolderName = "uix-starter-main";
+    folderName = "uix-starter-main";
   }
   console.log(
     "Downloading project template from https://github.com/pitch-io/uix-starter..."
