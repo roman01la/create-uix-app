@@ -222,7 +222,7 @@ app/`
         }
         console.log("npm run cljs:dev # run dev build in watch mode");
         console.log("npm run cljs:release # build production bundle");
-      } else {
+      } else if (flyIo) {
         const pkgjson = JSON.parse(
           fs.readFileSync(
             path.join(process.cwd(), projectName, "package.json"),
@@ -275,6 +275,53 @@ app/`
                 "fly app create uix-starter # create a new Fly.io app, run once\n" +
                 "fly deploy"
             );
+          }
+        });
+        pDeps.stdout.pipe(process.stdout);
+        pDeps.stderr.pipe(process.stderr);
+      } else {
+        const pkgjson = JSON.parse(
+          fs.readFileSync(
+            path.join(process.cwd(), projectName, "package.json"),
+            "utf8"
+          )
+        );
+        pkgjson.name = projectName;
+        fs.writeFileSync(
+          path.join(process.cwd(), projectName, "package.json"),
+          prettier.format(JSON.stringify(pkgjson), {
+            parser: "json",
+          })
+        );
+        const readme = fs.readFileSync(
+          path.join(process.cwd(), projectName, "README.md"),
+          "utf8"
+        );
+        fs.writeFileSync(
+          path.join(process.cwd(), projectName, "README.md"),
+          readme
+            .replace("uix-starter", projectName)
+            .split("\n")
+            .filter((l) => !l.startsWith("Template project"))
+            .join("\n")
+        );
+        console.log("Installing dependencies...");
+        const pDeps = exec(`cd ${projectName} && npm install`, (err) => {
+          if (err) {
+            console.error(err);
+          } else {
+            console.log();
+            console.log("Using:");
+            console.log(
+              Object.entries(pkgjson.devDependencies)
+                .map(([k, v]) => `${k}@${v}`)
+                .join("\n")
+            );
+            console.log();
+            console.log(
+              "npm run dev # run dev build in watch mode with CLJS REPL"
+            );
+            console.log("npm run release # build production bundle");
           }
         });
         pDeps.stdout.pipe(process.stdout);
