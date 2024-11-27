@@ -13,6 +13,220 @@ function camelToKebab(str) {
   return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
+function downloadAndExtractTemplate(downloadUrl, folderName, projectName, reactNative) {
+  console.log(
+    "Downloading project template from https://github.com/pitch-io/uix-starter..."
+  );
+  return axios
+    .get(downloadUrl, {
+      responseType: "stream",
+    })
+    .then(
+      (r) =>
+        new Promise((resolve, reject) => {
+          r.data
+            .pipe(tar.extract({ cwd: process.cwd() }))
+            .on("end", () => {
+              if (!reactNative) {
+                fs.renameSync(
+                  path.join(process.cwd(), folderName),
+                  path.join(process.cwd(), projectName)
+                );
+              }
+              resolve();
+            })
+            .on("error", (err) => reject(err));
+        })
+    );
+}
+
+function updateProjectFiles(projectName, expo, reactNative, flyIo) {
+  if (expo) {
+    const appjson = JSON.parse(
+      fs.readFileSync(
+        path.join(process.cwd(), projectName, "app.json"),
+        "utf8"
+      )
+    );
+    appjson.expo.name = projectName;
+    appjson.expo.slug = camelToKebab(projectName);
+    fs.writeFileSync(
+      path.join(process.cwd(), projectName, "app.json"),
+      prettier.format(JSON.stringify(appjson), {
+        parser: "json",
+      })
+    );
+  }
+
+  if (reactNative) {
+    const pkgjsonTmpl = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          process.cwd(),
+          "uix-starter-react-native",
+          "package.json"
+        ),
+        "utf8"
+      )
+    );
+    const pkgjsonPrjct = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+    );
+
+    fs.writeFileSync(
+      path.join(process.cwd(), "package.json"),
+      prettier.format(
+        JSON.stringify(deepmerge(pkgjsonPrjct, pkgjsonTmpl)),
+        {
+          parser: "json",
+        }
+      )
+    );
+
+    fs.renameSync(
+      path.join(process.cwd(), "uix-starter-react-native", "src"),
+      path.join(process.cwd(), "src")
+    );
+
+    fs.renameSync(
+      path.join(process.cwd(), "uix-starter-react-native", "dev"),
+      path.join(process.cwd(), "dev")
+    );
+
+    fs.renameSync(
+      path.join(process.cwd(), "uix-starter-react-native", "deps.edn"),
+      path.join(process.cwd(), "deps.edn")
+    );
+
+    fs.renameSync(
+      path.join(
+        process.cwd(),
+        "uix-starter-react-native",
+        "shadow-cljs.edn"
+      ),
+      path.join(process.cwd(), "shadow-cljs.edn")
+    );
+
+    fs.rmSync("uix-starter-react-native", { recursive: true });
+
+    const coreNs = fs.readFileSync(
+      path.join(process.cwd(), "src/app/core.cljs"),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(process.cwd(), "src/app/core.cljs"),
+      coreNs.replace("{{app-name}}", projectName)
+    );
+
+    fs.writeFileSync(
+      path.join(process.cwd(), "index.js"),
+      `import "./app/index.js";`
+    );
+
+    if (fs.existsSync(".gitignore")) {
+      fs.appendFileSync(
+        path.join(process.cwd(), ".gitignore"),
+        `
+.cpcache/
+.shadow-cljs/
+app/`
+      );
+    }
+  } else {
+    const pkgjson = JSON.parse(
+      fs.readFileSync(
+        path.join(process.cwd(), projectName, "package.json"),
+        "utf8"
+      )
+    );
+    pkgjson.name = projectName;
+    fs.writeFileSync(
+      path.join(process.cwd(), projectName, "package.json"),
+      prettier.format(JSON.stringify(pkgjson), {
+        parser: "json",
+      })
+    );
+  }
+
+  const readme = fs.readFileSync(
+    path.join(process.cwd(), projectName, "README.md"),
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(process.cwd(), projectName, "README.md"),
+    readme
+      .replace("uix-starter", projectName)
+      .split("\n")
+      .filter((l) => !l.startsWith("Template project"))
+      .join("\n")
+  );
+
+  if (flyIo) {
+    const toml = fs.readFileSync(
+      path.join(process.cwd(), projectName, "fly.toml"),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(process.cwd(), projectName, "fly.toml"),
+      toml.replace("uix-starter", projectName)
+    );
+  }
+}
+
+function installDependenciesAndPrintInstructions(projectName, expo, reactNative, flyIo) {
+  console.log("Installing dependencies...");
+  const pDeps = exec(`cd ${projectName} && npm install`, (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log();
+      if (expo) {
+        console.log(
+          "npm run dev # run dev build with Expo and cljs build in watch mode"
+        );
+        console.log("npm run cljs:release # build production bundle");
+      } else if (reactNative) {
+        console.log("npm run cljs:dev # run dev build in watch mode");
+        console.log("npm run cljs:release # build production bundle");
+      } else if (flyIo) {
+        console.log(
+          "=========================\n" +
+            "Development:\n" +
+            "npm run dev # run dev build in watch mode with CLJS REPL\n" +
+            "clojure -M -m app.core # or run the server from REPL\n\n"
+        );
+        console.log(
+          "=========================\n" +
+            "Deployment:\n" +
+            "install Fly.io CLI https://fly.io/docs/flyctl/install/\n" +
+            "fly app create uix-starter # create a new Fly.io app, run once\n" +
+            "fly deploy"
+        );
+      } else {
+        const pkgjson = JSON.parse(
+          fs.readFileSync(
+            path.join(process.cwd(), projectName, "package.json"),
+            "utf8"
+          )
+        );
+        console.log("Using:");
+        console.log(
+          Object.entries(pkgjson.devDependencies)
+            .map(([k, v]) => `${k}@${v}`)
+            .join("\n")
+        );
+        console.log();
+        console.log(
+          "npm run dev # run dev build in watch mode with CLJS REPL"
+        );
+        console.log("npm run release # build production bundle");
+      }
+    }
+  });
+  pDeps.stdout.pipe(process.stdout);
+  pDeps.stderr.pipe(process.stderr);
+}
+
 program
   .name(pkg.name)
   .description(pkg.description)
@@ -66,266 +280,8 @@ if (!projectName && !reFrame && !reactNative && !expo && !flyIo) {
   } else {
     folderName = "uix-starter-main";
   }
-  console.log(
-    "Downloading project template from https://github.com/pitch-io/uix-starter..."
-  );
-  axios
-    .get(downloadUrl, {
-      responseType: "stream",
-    })
-    .then(
-      (r) =>
-        new Promise((resolve, reject) => {
-          r.data
-            .pipe(tar.extract({ cwd: process.cwd() }))
-            .on("end", () => {
-              if (!reactNative) {
-                fs.renameSync(
-                  path.join(process.cwd(), folderName),
-                  path.join(process.cwd(), projectName)
-                );
-              }
-              resolve();
-            })
-            .on("error", (err) => reject(err));
-        })
-    )
-    .then(() => {
-      if (expo) {
-        const appjson = JSON.parse(
-          fs.readFileSync(
-            path.join(process.cwd(), projectName, "app.json"),
-            "utf8"
-          )
-        );
-        appjson.expo.name = projectName;
-        appjson.expo.slug = camelToKebab(projectName);
-        fs.writeFileSync(
-          path.join(process.cwd(), projectName, "app.json"),
-          prettier.format(JSON.stringify(appjson), {
-            parser: "json",
-          })
-        );
 
-        const pkgjson = JSON.parse(
-          fs.readFileSync(
-            path.join(process.cwd(), projectName, "package.json"),
-            "utf8"
-          )
-        );
-        pkgjson.name = projectName;
-        fs.writeFileSync(
-          path.join(process.cwd(), projectName, "package.json"),
-          prettier.format(JSON.stringify(pkgjson), {
-            parser: "json",
-          })
-        );
-        const readme = fs.readFileSync(
-          path.join(process.cwd(), projectName, "README.md"),
-          "utf8"
-        );
-        fs.writeFileSync(
-          path.join(process.cwd(), projectName, "README.md"),
-          readme
-            .replace("uix-starter", projectName)
-            .split("\n")
-            .filter((l) => !l.startsWith("Template project"))
-            .join("\n")
-        );
-        console.log("Installing dependencies...");
-        const pDeps = exec(`cd ${projectName} && npm install`, (err) => {
-          if (err) {
-            console.error(err);
-          } else {
-            console.log();
-            console.log(
-              "npm run dev # run dev build with Expo and cljs build in watch mode"
-            );
-            console.log("npm run cljs:release # build production bundle");
-          }
-        });
-        pDeps.stdout.pipe(process.stdout);
-        pDeps.stderr.pipe(process.stderr);
-      } else if (reactNative) {
-        const pkgjsonTmpl = JSON.parse(
-          fs.readFileSync(
-            path.join(
-              process.cwd(),
-              "uix-starter-react-native",
-              "package.json"
-            ),
-            "utf8"
-          )
-        );
-        const pkgjsonPrjct = JSON.parse(
-          fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
-        );
-
-        fs.writeFileSync(
-          path.join(process.cwd(), "package.json"),
-          prettier.format(
-            JSON.stringify(deepmerge(pkgjsonPrjct, pkgjsonTmpl)),
-            {
-              parser: "json",
-            }
-          )
-        );
-
-        fs.renameSync(
-          path.join(process.cwd(), "uix-starter-react-native", "src"),
-          path.join(process.cwd(), "src")
-        );
-
-        fs.renameSync(
-          path.join(process.cwd(), "uix-starter-react-native", "dev"),
-          path.join(process.cwd(), "dev")
-        );
-
-        fs.renameSync(
-          path.join(process.cwd(), "uix-starter-react-native", "deps.edn"),
-          path.join(process.cwd(), "deps.edn")
-        );
-
-        fs.renameSync(
-          path.join(
-            process.cwd(),
-            "uix-starter-react-native",
-            "shadow-cljs.edn"
-          ),
-          path.join(process.cwd(), "shadow-cljs.edn")
-        );
-
-        fs.rmSync("uix-starter-react-native", { recursive: true });
-
-        const coreNs = fs.readFileSync(
-          path.join(process.cwd(), "src/app/core.cljs"),
-          "utf8"
-        );
-        fs.writeFileSync(
-          path.join(process.cwd(), "src/app/core.cljs"),
-          coreNs.replace("{{app-name}}", projectName)
-        );
-
-        fs.writeFileSync(
-          path.join(process.cwd(), "index.js"),
-          `import "./app/index.js";`
-        );
-
-        if (fs.existsSync(".gitignore")) {
-          fs.appendFileSync(
-            path.join(process.cwd(), ".gitignore"),
-            `
-.cpcache/
-.shadow-cljs/
-app/`
-          );
-        }
-        console.log("npm run cljs:dev # run dev build in watch mode");
-        console.log("npm run cljs:release # build production bundle");
-      } else if (flyIo) {
-        const pkgjson = JSON.parse(
-          fs.readFileSync(
-            path.join(process.cwd(), projectName, "package.json"),
-            "utf8"
-          )
-        );
-        pkgjson.name = projectName;
-        fs.writeFileSync(
-          path.join(process.cwd(), projectName, "package.json"),
-          prettier.format(JSON.stringify(pkgjson), {
-            parser: "json",
-          })
-        );
-        const readme = fs.readFileSync(
-          path.join(process.cwd(), projectName, "README.md"),
-          "utf8"
-        );
-        fs.writeFileSync(
-          path.join(process.cwd(), projectName, "README.md"),
-          readme
-            .replace("uix-starter", projectName)
-            .split("\n")
-            .filter((l) => !l.startsWith("Template project"))
-            .join("\n")
-        );
-        const toml = fs.readFileSync(
-          path.join(process.cwd(), projectName, "fly.toml"),
-          "utf8"
-        );
-        fs.writeFileSync(
-          path.join(process.cwd(), projectName, "fly.toml"),
-          toml.replace("uix-starter", projectName)
-        );
-        console.log("Installing dependencies...");
-        const pDeps = exec(`cd ${projectName} && npm install`, (err) => {
-          if (err) {
-            console.error(err);
-          } else {
-            console.log();
-            console.log(
-              "=========================\n" +
-                "Development:\n" +
-                "npm run dev # run dev build in watch mode with CLJS REPL\n" +
-                "clojure -M -m app.core # or run the server from REPL\n\n"
-            );
-            console.log(
-              "=========================\n" +
-                "Deployment:\n" +
-                "install Fly.io CLI https://fly.io/docs/flyctl/install/\n" +
-                "fly app create uix-starter # create a new Fly.io app, run once\n" +
-                "fly deploy"
-            );
-          }
-        });
-        pDeps.stdout.pipe(process.stdout);
-        pDeps.stderr.pipe(process.stderr);
-      } else {
-        const pkgjson = JSON.parse(
-          fs.readFileSync(
-            path.join(process.cwd(), projectName, "package.json"),
-            "utf8"
-          )
-        );
-        pkgjson.name = projectName;
-        fs.writeFileSync(
-          path.join(process.cwd(), projectName, "package.json"),
-          prettier.format(JSON.stringify(pkgjson), {
-            parser: "json",
-          })
-        );
-        const readme = fs.readFileSync(
-          path.join(process.cwd(), projectName, "README.md"),
-          "utf8"
-        );
-        fs.writeFileSync(
-          path.join(process.cwd(), projectName, "README.md"),
-          readme
-            .replace("uix-starter", projectName)
-            .split("\n")
-            .filter((l) => !l.startsWith("Template project"))
-            .join("\n")
-        );
-        console.log("Installing dependencies...");
-        const pDeps = exec(`cd ${projectName} && npm install`, (err) => {
-          if (err) {
-            console.error(err);
-          } else {
-            console.log();
-            console.log("Using:");
-            console.log(
-              Object.entries(pkgjson.devDependencies)
-                .map(([k, v]) => `${k}@${v}`)
-                .join("\n")
-            );
-            console.log();
-            console.log(
-              "npm run dev # run dev build in watch mode with CLJS REPL"
-            );
-            console.log("npm run release # build production bundle");
-          }
-        });
-        pDeps.stdout.pipe(process.stdout);
-        pDeps.stderr.pipe(process.stderr);
-      }
-    });
+  downloadAndExtractTemplate(downloadUrl, folderName, projectName, reactNative)
+    .then(() => updateProjectFiles(projectName, expo, reactNative, flyIo))
+    .then(() => installDependenciesAndPrintInstructions(projectName, expo, reactNative, flyIo));
 }
